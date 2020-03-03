@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @RestController
@@ -35,26 +35,12 @@ public class BuyifyRestApplicationController {
         Optional<Order> order = orderRepository.findById(id);
 
         String filename = "factura_" + id + ".pdf";
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
 
+        ByteArrayOutputStream output;
         try {
-            PDDocument document = new PDDocument();
-            PDPage page = new PDPage(PDRectangle.A4);
-            document.addPage(page);
-
-            PDPageContentStream contentStream = new PDPageContentStream(document, page);
-
-            contentStream.beginText();
-            contentStream.newLineAtOffset(10, 770);
-            contentStream.setFont(PDType1Font.TIMES_ROMAN, 16);
-            contentStream.showText(order.get().getProducts().stream().map(Product::getName).collect(Collectors.joining(" - ")));
-            contentStream.endText();
-
-            contentStream.close();
-
-            document.save(output);
+            output = createInvoice(order.get());
         } catch (IOException e) {
-            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
 
         HttpHeaders headers = new HttpHeaders();
@@ -62,6 +48,46 @@ public class BuyifyRestApplicationController {
         headers.set("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
         return new ResponseEntity<>(output.toByteArray(), headers, HttpStatus.OK);
+    }
+
+
+    private ByteArrayOutputStream createInvoice(Order order) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+
+        PDDocument document = new PDDocument();
+        PDPage page = new PDPage(PDRectangle.A4);
+        document.addPage(page);
+
+        PDPageContentStream contentStream = new PDPageContentStream(document, page);
+
+        contentStream.beginText();
+        contentStream.setFont(PDType1Font.TIMES_BOLD, 26);
+        contentStream.setLeading(40f);
+        contentStream.newLineAtOffset(60, 760);
+        contentStream.showText("Pedido nº " + order.getId());
+        contentStream.newLine();
+
+        contentStream.setFont(PDType1Font.TIMES_ROMAN, 14);
+        contentStream.setLeading(16f);
+
+        contentStream.showText(order.getUser().getName());
+        contentStream.newLine();
+        contentStream.showText("Fecha: " + formatter.format(order.getDate()));
+        contentStream.newLine();
+        contentStream.newLine();
+
+        for (Product product : order.getProducts()) {
+            contentStream.showText(product.getName() + " - " + product.getPrice() + "€");
+            contentStream.newLine();
+        }
+        contentStream.endText();
+        contentStream.close();
+
+        document.save(output);
+
+        return output;
     }
 
 }
