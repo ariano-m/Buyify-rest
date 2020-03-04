@@ -2,7 +2,9 @@ package com.buyify.rest;
 
 import com.buyify.rest.entities.Order;
 import com.buyify.rest.entities.Product;
+import com.buyify.rest.entities.User;
 import com.buyify.rest.repositories.OrderRepository;
+import com.buyify.rest.repositories.UserRepository;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -13,10 +15,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,7 +29,13 @@ import java.util.Optional;
 public class BuyifyRestApplicationController {
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    public JavaMailSender emailSender;
 
     @RequestMapping(value = "/generarFactura/{id}", method = RequestMethod.GET)
     public ResponseEntity<byte[]> generatePDF(@PathVariable long id) {
@@ -50,6 +57,19 @@ public class BuyifyRestApplicationController {
         return new ResponseEntity<>(output.toByteArray(), headers, HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/mail/{id}", method = RequestMethod.GET)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void email(@PathVariable long id) {
+        Optional<User> user = userRepository.findById(id);
+
+        System.out.println("Enviando correo a: " + user.get().getEmail());
+
+        sendMail(user.get().getEmail(), "Bienvenido a Buyify",
+                "Bienvenido a Buyify. Bienvenido a Buyify. Bienvenido a Buyify. " +
+                        "Bienvenido a Buyify. Bienvenido a Buyify. Bienvenido a Buyify. " +
+                        "Bienvenido a Buyify. Bienvenido a Buyify. Bienvenido a Buyify. " +
+                        "Bienvenido a Buyify. Bienvenido a Buyify. Bienvenido a Buyify.");
+    }
 
     private ByteArrayOutputStream createInvoice(Order order) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -88,6 +108,15 @@ public class BuyifyRestApplicationController {
         document.save(output);
 
         return output;
+    }
+
+    public void sendMail(String address, String subject, String text) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(address);
+        message.setSubject(subject);
+        message.setText(text);
+
+        emailSender.send(message);
     }
 
 }
