@@ -65,10 +65,23 @@ public class BuyifyRestApplicationController {
         System.out.println("Enviando correo a: " + user.get().getEmail());
 
         sendMail(user.get().getEmail(), "Bienvenido a Buyify",
-                "Bienvenido a Buyify. Bienvenido a Buyify. Bienvenido a Buyify. " +
-                        "Bienvenido a Buyify. Bienvenido a Buyify. Bienvenido a Buyify. " +
-                        "Bienvenido a Buyify. Bienvenido a Buyify. Bienvenido a Buyify. " +
-                        "Bienvenido a Buyify. Bienvenido a Buyify. Bienvenido a Buyify.");
+                "Bienvenido a Buyify\nTu usuario es: "+user.get().getUsername());
+    }
+    
+    @RequestMapping(value = "/realizado/{id_order}", method = RequestMethod.GET)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void OrderEmail(@PathVariable long id_order) {
+        Optional<Order> order = orderRepository.findById(id_order);
+        String email = order.get().getUser().getEmail();
+        StringBuilder order_concat = new StringBuilder();
+        for(Product p : order.get().getProducts()) {
+            order_concat.append(p.getName()+","+p.getPrice()+","+p.getDescription()+"\n");
+        }
+        System.out.println("Enviando correo a: " + email);
+
+        sendMail(email, "Pedido Realizado",
+                "Su pedido ha sido procesado correctamente\n"
+                +order_concat);
     }
 
     private ByteArrayOutputStream createInvoice(Order order) throws IOException {
