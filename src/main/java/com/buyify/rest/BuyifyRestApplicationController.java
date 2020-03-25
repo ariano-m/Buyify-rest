@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
@@ -62,26 +63,22 @@ public class BuyifyRestApplicationController {
     public void email(@PathVariable long id) {
         Optional<User> user = userRepository.findById(id);
 
-        System.out.println("Enviando correo a: " + user.get().getEmail());
-
         sendMail(user.get().getEmail(), "Bienvenido a Buyify",
-                "Bienvenido a Buyify\nTu usuario es: "+user.get().getUsername());
+                "Bienvenido a Buyify\nTu usuario es: " + user.get().getUsername());
     }
-    
+
     @RequestMapping(value = "/realizado/{id_order}", method = RequestMethod.GET)
     @ResponseStatus(value = HttpStatus.OK)
     public void OrderEmail(@PathVariable long id_order) {
         Optional<Order> order = orderRepository.findById(id_order);
         String email = order.get().getUser().getEmail();
-        StringBuilder order_concat = new StringBuilder();
-        for(Product p : order.get().getProducts()) {
-            order_concat.append(p.getName()+","+p.getPrice()+","+p.getDescription()+"\n");
-        }
-        System.out.println("Enviando correo a: " + email);
+        StringBuilder mensaje = new StringBuilder();
 
-        sendMail(email, "Pedido Realizado",
-                "Su pedido ha sido procesado correctamente\n"
-                +order_concat);
+        for (Product p : order.get().getProducts()) {
+            mensaje.append(p.getName() + "," + p.getPrice() + "," + p.getDescription() + "\n");
+        }
+
+        sendMail(email, "Pedido Realizado","Su pedido ha sido procesado correctamente\n" + mensaje);
     }
 
     private ByteArrayOutputStream createInvoice(Order order) throws IOException {
@@ -124,12 +121,16 @@ public class BuyifyRestApplicationController {
     }
 
     public void sendMail(String address, String subject, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(address);
-        message.setSubject(subject);
-        message.setText(text);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(address);
+            message.setSubject(subject);
+            message.setText(text);
 
-        emailSender.send(message);
+            emailSender.send(message);
+        } catch (MailException me) {
+            System.out.println("Email could not be sent");
+        }
     }
 
 }
