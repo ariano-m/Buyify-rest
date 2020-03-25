@@ -63,13 +63,15 @@ public class BuyifyRestApplicationController {
     public void email(@PathVariable long id) {
         Optional<User> user = userRepository.findById(id);
 
+        System.out.println("Enviando correo a: " + user.get().getEmail());
+
         sendMail(user.get().getEmail(), "Bienvenido a Buyify",
                 "Bienvenido a Buyify\nTu usuario es: " + user.get().getUsername());
     }
 
     @RequestMapping(value = "/realizado/{id_order}", method = RequestMethod.GET)
     @ResponseStatus(value = HttpStatus.OK)
-    public void OrderEmail(@PathVariable long id_order) {
+    public void orderEmail(@PathVariable long id_order) {
         Optional<Order> order = orderRepository.findById(id_order);
         String email = order.get().getUser().getEmail();
         StringBuilder mensaje = new StringBuilder();
@@ -77,6 +79,8 @@ public class BuyifyRestApplicationController {
         for (Product p : order.get().getProducts()) {
             mensaje.append(p.getName() + "," + p.getPrice() + "," + p.getDescription() + "\n");
         }
+
+        System.out.println("Enviando correo a: " + email);
 
         sendMail(email, "Pedido Realizado","Su pedido ha sido procesado correctamente\n" + mensaje);
     }
