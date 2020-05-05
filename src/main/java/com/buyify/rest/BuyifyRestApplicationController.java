@@ -38,7 +38,7 @@ public class BuyifyRestApplicationController {
     @Autowired
     public JavaMailSender emailSender;
 
-    @RequestMapping(value = "/generarFactura/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/factura/{id}", method = RequestMethod.GET)
     public ResponseEntity<byte[]> generatePDF(@PathVariable long id) {
         Optional<Order> order = orderRepository.findById(id);
 
@@ -69,7 +69,7 @@ public class BuyifyRestApplicationController {
                 "Bienvenido a Buyify\nTu usuario es: " + user.get().getUsername());
     }
 
-    @RequestMapping(value = "/realizado/{id_order}", method = RequestMethod.GET)
+    @RequestMapping(value = "/pedido/{id_order}", method = RequestMethod.GET)
     @ResponseStatus(value = HttpStatus.OK)
     public void orderEmail(@PathVariable long id_order) {
         Optional<Order> order = orderRepository.findById(id_order);
