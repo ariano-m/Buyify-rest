@@ -1,12 +1,18 @@
 package com.buyify.rest.repositories;
 
 import com.buyify.rest.entities.Order;
-import com.buyify.rest.entities.User;
-
-import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-	List<Order> findByUser(User user);
+
+    @Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+    Order save(Order order);
+
+    @Transactional(readOnly = true)
+    Optional<Order> findById(Long id);
+
 }
